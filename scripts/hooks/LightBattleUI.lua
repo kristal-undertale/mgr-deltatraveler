@@ -4,6 +4,7 @@ function LightBattleUI:drawCustomGaugeLabels(arena_ox, arena_oy)
     if self.style ~= "deltatraveler" then
         return super.drawCustomGaugeLabels(self, arena_ox, arena_oy)
     end
+    
     local font_main = Assets.getFont("main")
     love.graphics.setFont(font_main)
     if Game.battle.state_reason ~= "XACT" then
@@ -16,6 +17,7 @@ function LightBattleUI:drawCustomEnemyGauge(enemy, y_offset, hp_percent, arena_o
     if self.style ~= "deltatraveler" then
         return super.drawCustomEnemyGauge(self, enemy, y_offset, hp_percent, arena_ox, arena_oy)
     end
+
     local font_status = Assets.getFont("battlehud")
     local hp_x = self.draw_mercy and 400 or 500
     if enemy.selectable and Game.battle.state_reason ~= "XACT" then
