@@ -1,0 +1,22 @@
+{
+    "id": "mgr-deltatraveler",
+    "dependencies": ["magical-glass"],
+
+    "authors": [
+        "Nyakorita",
+        "Sam Deluxe",
+        "FireRainV"
+    ],
+
+    "version": "v1.0.0",
+    "engineVer": "v0.10.0-dev",
+    "default": true,
+
+    "config": {
+
+        ///// Enemy Gauge Smoothness
+        // Whether the enemy HP/MERCY bar when hit/gain mercy will be smooth like Deltatraveler or be accurate to Undertale.
+        /////
+        "enemy_gauge_smoothness": false
+    }
+}
