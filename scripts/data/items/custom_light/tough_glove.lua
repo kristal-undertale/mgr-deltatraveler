@@ -46,12 +46,12 @@ function item:init()
     self.light_bolt_speed_variance = 0
     self.light_bolt_direction = "right"
     self.light_bolt_miss_threshold = 4
-    self.light_multibolt_variance = {{15, 50}, {85, 120}, {155, 190}}
+    self.light_multibolt_variance = { { 15, 50 }, { 85, 120 }, { 155, 190 } }
     self.light_attack_crit_multiplier = 2.1
 
     self.attack_sound = "punchstrong"
 
-    self.tags = {"punch", "slice_damage"}
+    self.tags = { "punch", "slice_damage" }
 end
 
 function item:showEquipText(target)
@@ -63,80 +63,39 @@ function item:showEquipTextFail(target)
 end
 
 function item:getLightBattleText(user, target)
-    local text = "* "..target.chara:getNameOrYou().." equipped "..self:getUseName().."."
+    local text = "* " .. target.chara:getNameOrYou() .. " equipped " .. self:getUseName() .. "."
     if user ~= target then
-        text = "* "..user.chara:getNameOrYou().." gave "..self:getUseName().." to "..target.chara:getNameOrYou(true)..".\n" .. "* "..target.chara:getNameOrYou().." equipped it."
+        text = "* " .. user.chara:getNameOrYou() .. " gave " .. self:getUseName() .. " to " .. target.chara:getNameOrYou(true) .. ".\n" .. "* " .. target.chara:getNameOrYou() .. " equipped it."
     end
     return text
 end
 
 function item:getLightBattleTextFail(user, target)
-    local text = "* "..target.chara:getNameOrYou().." didn't want to equip "..self:getUseName().."."
+    local text = "* " .. target.chara:getNameOrYou() .. " didn't want to equip " .. self:getUseName() .. "."
     if user ~= target then
-        text = "* "..user.chara:getNameOrYou().." gave "..self:getUseName().." to "..target.chara:getNameOrYou(true)..".\n" .. "* "..target.chara:getNameOrYou().." didn't want to equip it."
+        text = "* " .. user.chara:getNameOrYou() .. " gave " .. self:getUseName() .. " to " .. target.chara:getNameOrYou(true) .. ".\n" .. "* " .. target.chara:getNameOrYou() .. " didn't want to equip it."
     end
     return text
 end
 
-function item:onLightBoltHit(lane)
-    local battler = lane.battler
+function item:onLightBoltHit(data)
+    local battler = data.battler
     local enemy = Game.battle:getActionBy(battler).target
 
-    if enemy and lane.bolts[2] then
-        Assets.playSound("punchweak")
-        local small_punch = Sprite("effects/lightattack/hyperfist")
-        small_punch.battler_id = battler and Game.battle:getPartyIndex(battler.chara.id) or nil
-        table.insert(enemy.dmg_sprites, small_punch)
-        small_punch:setOrigin(0.5)
-        small_punch:setScale(0.5)
-        small_punch.layer = LIGHT_BATTLE_LAYERS["above_arena_border"]
-        small_punch.color = {battler.chara:getLightMultiboltAttackColor()}
-        small_punch:setPosition(enemy:getRelativePos((love.math.random(enemy.width)), (love.math.random(enemy.height))))
-        Game.battle:shakeAttackSprite(small_punch)
-        enemy.parent:addChild(small_punch)
-        small_punch:play(2/30, false, function(s) s:remove(); TableUtils.removeValue(enemy.dmg_sprites, small_punch) end)
+    if enemy and data.bolts[2] then
+        self:startLightAttackAnimation(battler, enemy, nil, nil, nil, { sprite = "effects/lightattack/regfist", sound = "punchweak", color = true,
+          position = { enemy:getRelativePos((love.math.random(enemy.width)), (love.math.random(enemy.height))) }, shake = true, speed = 2 / 30, scale = 1 })
     end
 end
 
 function item:onLightAttack(battler, enemy, damage, stretch, crit)
-    if damage <= 0 then
-        enemy:onDodge(battler, true)
-    end
-    local src = Assets.stopAndPlaySound(self:getLightAttackSound() or "laz_c")
-    src:setPitch(self:getLightAttackPitch() or 1)
+    self:startLightAttackAnimation(battler, enemy, damage, stretch, crit, { sprite = "effects/lightattack/hyperfist", color = true,
+      shake = true, speed = 2 / 30, scale = 1, battle_shake = true, trigger_dodge = true })
 
-    local sprite = Sprite("effects/lightattack/hyperfist")
-    sprite.battler_id = battler and Game.battle:getPartyIndex(battler.chara.id) or nil
-    table.insert(enemy.dmg_sprites, sprite)
-    sprite:setOrigin(0.5)
-    local relative_pos_x, relative_pos_y = enemy:getRelativePos((enemy.width / 2) - (#Game.battle.attackers - 1) * 5 / 2 + (TableUtils.getIndex(Game.battle.attackers, battler) - 1) * 5, (enemy.height / 2))
-    sprite:setPosition(relative_pos_x + enemy.dmg_sprite_offset[1], relative_pos_y + enemy.dmg_sprite_offset[2])
-    sprite.layer = LIGHT_BATTLE_LAYERS["above_arena_border"]
-    sprite.color = {battler.chara:getLightMultiboltAttackColor()}
-    enemy.parent:addChild(sprite)
-
-    if battler.chara:getWeapon() then -- attacking without a weapon
-        if crit then
-            if Utils.equal({battler.chara:getLightMultiboltAttackColor()}, COLORS.white) then
-                sprite:setColor(TableUtils.lerp(COLORS.white, COLORS.yellow, 0.5))
-            else
-                sprite:setColor(TableUtils.lerp({battler.chara:getLightMultiboltAttackColor()}, COLORS.white, 0.5))
-            end
-            Assets.stopAndPlaySound("saber3")
-        end
-
-        Game.battle:shakeCamera(2, 2, 0.35)
-    end
-    Game.battle:shakeAttackSprite(sprite)
-    
-    Game.battle.timer:after(10/30, function()
+    Game.battle.timer:after(10 / 30, function()
         self:onLightAttackHurt(battler, enemy, damage, stretch, crit)
     end)
 
-    sprite:play(2/30, false, function(this)   
-        this:remove()
-        TableUtils.removeValue(enemy.dmg_sprites, this)
-    end)
     return false
 end
 
